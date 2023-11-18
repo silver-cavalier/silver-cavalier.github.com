@@ -1,15 +1,6 @@
-# from flask import Flask, render_template
-# app = Flask(__name__)
-
-
-# @app.route('/')
-# def hello():
-#     return render_template('index.html', name=name, movies=movies)
-
-
 import os
 import sys
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 WIN = sys.platform.startswith('win')
@@ -49,13 +40,27 @@ def initdb(drop):
     db.create_all()
     click.echo('Initialized database.') # 输出提示信息
 
+
+# 模板上下文处理函数，后面我们创建的任意一个模板，都可以在模板中直接使用 user 变量
+
+@app.context_processor
+def inject_user(): # 函数名可以随意修改
+    user = User.query.first()
+    return dict(user=user) # 需要返回字典，等同于return {'user': user}
+
+
+# 404 错误处理函数
+
+@app.errorhandler(404)
+def page_not_found(e): # 接受异常对象作为参数
+    return render_template('404.html'), 404 # 返回模板和状态码
+
 # 在主页视图读取数据库记录
 
 @app.route('/')
 def index():
-    user = User.query.first() # 读取用户记录
     movies = Movie.query.all() # 读取所有电影记录
-    return render_template('index.html', user=user, movies=movies)
+    return render_template('index.html', movies=movies)
 
 # 注：在 index 视图中，原来传入模板的 name 变量被 user 实例取代，模板 index.html 中的两处 name 变量也要相应的更新为 user.name 属性
 
@@ -91,3 +96,12 @@ def forge():
     
     db.session.commit()
     click.echo('Done.')
+
+
+
+
+
+
+
+
+
