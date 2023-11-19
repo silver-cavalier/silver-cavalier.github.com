@@ -90,7 +90,7 @@ def index():
     if request.method == 'POST': # 判断是否是 POST 请求
         if not current_user.is_authenticated: # 如果当前用户未认证
             return redirect(url_for('index')) # 重定向到主页
-    # 获取表单数据
+        # 获取表单数据
         title = request.form.get('title') # 传入表单对应输入字段的name 值
         year = request.form.get('year')
         # 验证数据
