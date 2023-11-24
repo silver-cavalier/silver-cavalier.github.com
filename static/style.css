@@ -47,7 +47,7 @@ footer {
     height: 100px;
 }
 
-
+/* 导航栏 */
 nav ul {
     list-style-type: none;
     margin: 0;
@@ -73,8 +73,7 @@ nav li a:hover {
 }
 
 
-
-
+/* IMDb链接 */
 .float-right {
     float: right;
 }
