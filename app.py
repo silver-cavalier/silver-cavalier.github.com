@@ -60,12 +60,6 @@ class User(db.Model, UserMixin):  # 表名将会是 user（自动生成，小写
         self.password_hash = generate_password_hash(password) #将生成的密码保持到对应字段
     def validate_password(self, password): # 用于验证密码的方法，接受密码作为参数
         return check_password_hash(self.password_hash, password)
-# 储存电影-演员信息的 Relation 模型类
-class Relation(db.Model): # 表名将会是 relation
-    id = db.Column(db.Integer, primary_key=True) # 主键
-    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id')) # 外键
-    actor_id = db.Column(db.Integer, db.ForeignKey('actor.id')) # 外键
-    type = db.Column(db.String(6)) # 关系类型 
 # 存储电影信息的 Movie 模型类
 class Movie(db.Model): # 表名将会是 movie
     id = db.Column(db.Integer, primary_key=True) # 主键
@@ -75,17 +69,26 @@ class Movie(db.Model): # 表名将会是 movie
     type = db.Column(db.String(60)) # 电影类型
     year = db.Column(db.String(4)) # 电影年份
     box = db.Column(db.Float) # 票房
+    relations = db.relationship('Relation', back_populates='movie')
     # relation = db.relationship('Relation', primaryjoin='relation.movie_id == movie.id',
     #                         backref='movie', uselist=False, lazy='select') 
-    
 # 储存演员信息的 Actor 模型类
 class Actor(db.Model): # 表名将会是 actor
     id = db.Column(db.Integer, primary_key=True) # 主键
     name = db.Column(db.String(60)) # 演员名称
     gender = db.Column(db.String(10)) # 演员性别，设为10是防止外国的少数性别
     country = db.Column(db.String(60)) # 演员国籍
+    relations = db.relationship('Relation', back_populates='actor')
     # relation = db.relationship('Relation', primaryjoin='relation.actor_id == actor.id',
     #                         backref='actor', uselist=False, lazy='select')
+# 储存电影-演员信息的 Relation 模型类
+class Relation(db.Model): # 表名将会是 relation
+    id = db.Column(db.Integer, primary_key=True) # 主键
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id')) # 外键
+    actor_id = db.Column(db.Integer, db.ForeignKey('actor.id')) # 外键
+    type = db.Column(db.String(6)) # 关系类型 
+    movie = db.relationship('Movie', back_populates='relations')
+    actor = db.relationship('Actor', back_populates='relations')
 
 
 
