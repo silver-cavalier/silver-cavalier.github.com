@@ -112,15 +112,16 @@ def index():
         if not current_user.is_authenticated: # 如果当前用户未认证
             return redirect(url_for('index')) # 重定向到主页
         # 获取表单数据
-        title = request.form.get('title') # 传入表单对应输入字段的name 值
-        year = request.form.get('year')
+        name = request.form.get('name') # 传入表单对应输入字段的name 值
+        gender = request.form.get('gender')
+        country = request.form.get('country')
         # 验证数据
-        if not title or not year or len(year) > 4 or len(title) > 60:
+        if not name or not gender or not country or len(gender) > 10 or len(name) > 60 or len(country) > 60:
             flash('Invalid input.') # 显示错误提示
             return redirect(url_for('index')) # 重定向回主页
         # 保存表单数据到数据库
-        movie = Movie(title=title, year=year) # 创建记录
-        db.session.add(movie) # 添加到数据库会话
+        actor = Actor(name=name, gender=gender, country=country) # 创建记录
+        db.session.add(actor) # 添加到数据库会话
         db.session.commit() # 提交数据库会话
         flash('Item created.') # 显示成功创建的提示
         return redirect(url_for('index')) # 重定向回主页
@@ -129,8 +130,27 @@ def index():
     actors = Actor.query.all()
     return render_template('index.html', user=user, movies=movies, actors=actors)
 # 注：在 index 视图中，原来传入模板的 name 变量被 user 实例取代，模板 index.html 中的两处 name 变量也要相应的更新为 user.name 属性
-
-#编辑电影条目
+# 录入电影条目
+@app.route('/movie/input', methods=['GET', 'POST'])
+def input():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        year = request.form.get('year')
+        country = request.form.get('country')
+        type = request.form.get('type')
+        box = request.form.get('box')
+        # 验证数据
+        if not title or not year or len(year) > 4 or len(title) > 60 or len(country) > 60 or len(type) > 60:
+            flash('Invalid input.') # 显示错误提示
+            return redirect(url_for('index')) # 重定向回主页
+        if box == '':  # 处理票房为空的情况
+            box = None
+        movie = Movie(title=title, year=year, country=country, type=type, box=box)
+        db.session.add(movie)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('input.html')
+# 编辑电影条目
 @app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
 def edit(movie_id):
@@ -138,13 +158,18 @@ def edit(movie_id):
     if request.method == 'POST': # 处理编辑表单的提交请求
         title = request.form['title']
         year = request.form['year']
-        if not title or not year or len(year) > 4 or len(title) > 60:
+        country = request.form['country']
+        type = request.form['type']
+        box = request.form['box']
+        if not title or not year or len(year) > 4 or len(title) > 60 or len(country) > 60 or len(type) > 60:
             flash('Invalid input.')
             return redirect(url_for('edit', movie_id=movie_id))
-        
         # 重定向回对应的编辑页面
-        movie.title = title # 更新标题
-        movie.year = year # 更新年份
+        movie.title = title
+        movie.year = year
+        movie.country = country
+        movie.type = type 
+        movie.box = box
         db.session.commit() # 提交数据库会话
         flash('Item updated.')
         return redirect(url_for('index')) # 重定向回主页
@@ -158,6 +183,7 @@ def delete(movie_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+
 #编辑演员条目
 @app.route('/movie/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
@@ -180,14 +206,15 @@ def edit_actor(actor_id):
         return redirect(url_for('index')) # 重定向回主页
     return render_template('edit_actor.html', actor=actor) # 传入被编辑的电影记录
 # 删除演员条目
-@app.route('/movie/delete_actor/<int:actor_id>', methods=['POST']) # 限定只接受 POST 请求
+@app.route('/actor/delete_actor/<int:actor_id>', methods=['POST']) # 限定只接受 POST 请求
 @login_required # 登录保护
 def delete_actor(actor_id):
-    actor = Movie.query.get_or_404(actor_id) # 获取电影记录
+    actor = Actor.query.get_or_404(actor_id) # 获取电影记录
     db.session.delete(actor) # 删除对应的记录
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+
 # 用户登录
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -264,25 +291,25 @@ def forge():
     # 全局的两个变量移动到这个函数内
     name = 'Buyan Sun'
     movies = [
-        {'id': '1001', 'title': '战狼2', 'date': datetime.datetime(2017,7,27), 'country': '中国', 'type': '战争', 'year': '2017', 'box': '56.84'}, 
-        {'id': '1002', 'title': '哪吒之魔童降世', 'date': datetime.datetime(2019,7,26), 'country': '中国', 'type': '动画', 'year': '2019', 'box': '50.15'}, 
-        {'id': '1003', 'title': '流浪地球', 'date': datetime.datetime(2019,2,5), 'country': '中国', 'type': '科幻', 'year': '2019', 'box': '46.86'}, 
-        {'id': '1004', 'title': '复仇者联盟4', 'date': datetime.datetime(2019,4,24), 'country': '美国', 'type': '科幻', 'year': '2019', 'box': '42.50'}, 
-        {'id': '1005', 'title': '红海行动', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '战争', 'year': '2018', 'box': '36.50'}, 
-        {'id': '1006', 'title': '唐人街探案2', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': '33.97'}, 
-        {'id': '1007', 'title': '我不是药神', 'date': datetime.datetime(2018,7,5), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': '31.00'}, 
-        {'id': '1008', 'title': '中国机长', 'date': datetime.datetime(2019,9,30), 'country': '中国', 'type': '剧情', 'year': '2019', 'box': '29.12'}, 
-        {'id': '1009', 'title': '速度与激情8', 'date': datetime.datetime(2017,4,14), 'country': '美国', 'type': '动作', 'year': '2017', 'box': '26.70'}, 
-        {'id': '1010', 'title': '西虹市首富', 'date': datetime.datetime(2018,7,27), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': '25.47'}, 
-        {'id': '1011', 'title': '复仇者联盟3', 'date': datetime.datetime(2018,5,11), 'country': '美国', 'type': '科幻', 'year': '2018', 'box': '23.90'}, 
-        {'id': '1012', 'title': '捉妖记2', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': '22.37'}, 
-        {'id': '1013', 'title': '八佰', 'date': datetime.datetime(2020,8,21), 'country': '中国', 'type': '战争', 'year': '2020', 'box': '30.10'}, 
-        {'id': '1014', 'title': '姜子牙', 'date': datetime.datetime(2020,10,1), 'country': '中国', 'type': '动画', 'year': '2020', 'box': '16.02'}, 
-        {'id': '1015', 'title': '我和我的家乡', 'date': datetime.datetime(2020,10,1), 'country': '中国', 'type': '剧情', 'year': '2020', 'box': '28.29'}, 
-        {'id': '1016', 'title': '你好，李焕英', 'date': datetime.datetime(2021,2,12), 'country': '中国', 'type': '喜剧', 'year': '2021', 'box': '54.13'}, 
-        {'id': '1017', 'title': '长津湖', 'date': datetime.datetime(2021,9,30), 'country': '中国', 'type': '战争', 'year': '2021', 'box': '53.48'}, 
-        {'id': '1018', 'title': '速度与激情9', 'date': datetime.datetime(2021,5,21), 'country': '中国', 'type': '动作', 'year': '2021', 'box': '13.92'},
-    ]
+        {'id': '1001', 'title': '战狼2', 'date': datetime.datetime(2017,7,27), 'country': '中国', 'type': '战争', 'year': '2017', 'box': 56.84}, 
+        {'id': '1002', 'title': '哪吒之魔童降世', 'date': datetime.datetime(2019,7,26), 'country': '中国', 'type': '动画', 'year': '2019', 'box': 50.15}, 
+        {'id': '1003', 'title': '流浪地球', 'date': datetime.datetime(2019,2,5), 'country': '中国', 'type': '科幻', 'year': '2019', 'box': 46.86}, 
+        {'id': '1004', 'title': '复仇者联盟4', 'date': datetime.datetime(2019,4,24), 'country': '美国', 'type': '科幻', 'year': '2019', 'box': 42.50}, 
+        {'id': '1005', 'title': '红海行动', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '战争', 'year': '2018', 'box': 36.50}, 
+        {'id': '1006', 'title': '唐人街探案2', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': 33.97}, 
+        {'id': '1007', 'title': '我不是药神', 'date': datetime.datetime(2018,7,5), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': 31.00}, 
+        {'id': '1008', 'title': '中国机长', 'date': datetime.datetime(2019,9,30), 'country': '中国', 'type': '剧情', 'year': '2019', 'box': 29.12}, 
+        {'id': '1009', 'title': '速度与激情8', 'date': datetime.datetime(2017,4,14), 'country': '美国', 'type': '动作', 'year': '2017', 'box': 26.70}, 
+        {'id': '1010', 'title': '西虹市首富', 'date': datetime.datetime(2018,7,27), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': 25.47}, 
+        {'id': '1011', 'title': '复仇者联盟3', 'date': datetime.datetime(2018,5,11), 'country': '美国', 'type': '科幻', 'year': '2018', 'box': 23.90}, 
+        {'id': '1012', 'title': '捉妖记2', 'date': datetime.datetime(2018,2,16), 'country': '中国', 'type': '喜剧', 'year': '2018', 'box': 22.37}, 
+        {'id': '1013', 'title': '八佰', 'date': datetime.datetime(2020,8,21), 'country': '中国', 'type': '战争', 'year': '2020', 'box': 30.10}, 
+        {'id': '1014', 'title': '姜子牙', 'date': datetime.datetime(2020,10,1), 'country': '中国', 'type': '动画', 'year': '2020', 'box': 16.02}, 
+        {'id': '1015', 'title': '我和我的家乡', 'date': datetime.datetime(2020,10,1), 'country': '中国', 'type': '剧情', 'year': '2020', 'box': 28.29}, 
+        {'id': '1016', 'title': '你好，李焕英', 'date': datetime.datetime(2021,2,12), 'country': '中国', 'type': '喜剧', 'year': '2021', 'box': 54.13}, 
+        {'id': '1017', 'title': '长津湖', 'date': datetime.datetime(2021,9,30), 'country': '中国', 'type': '战争', 'year': '2021', 'box': 53.48}, 
+        {'id': '1018', 'title': '速度与激情9', 'date': datetime.datetime(2021,5,21), 'country': '中国', 'type': '动作', 'year': '2021', 'box': 13.92}, 
+]
     actors = [
         {'id': '2001', 'name': '吴京', 'gender': '男', 'country': '中国'}, 
         {'id': '2002', 'name': '饺子', 'gender': '男', 'country': '中国'}, 
@@ -385,7 +412,7 @@ def forge():
     db.session.add(user)
     for m in movies:
         movie = Movie(id=m['id'], title=m['title'], date=m['date'], 
-                      country=m['country'], type=m['type'], year=m['year'])
+                      country=m['country'], type=m['type'], year=m['year'], box=m['box'])
         db.session.add(movie)
     for a in actors:
         actor = Actor(id=a['id'], name=a['name'], country=a['country'], gender=a['gender'])

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<p>! 你输入了不合要求的值 !</p>
+
+<img alt="Poor" class="poor" src="{{ url_for('static', filename='images/poor.png') }}" title="poor~">
+
+{% endblock %}
