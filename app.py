@@ -126,7 +126,8 @@ def index():
         return redirect(url_for('index')) # 重定向回主页
     user = User.query.first()
     movies = Movie.query.all()
-    return render_template('index.html', user=user, movies=movies)
+    actors = Actor.query.all()
+    return render_template('index.html', user=user, movies=movies, actors=actors)
 # 注：在 index 视图中，原来传入模板的 name 变量被 user 实例取代，模板 index.html 中的两处 name 变量也要相应的更新为 user.name 属性
 
 #编辑电影条目
@@ -157,7 +158,36 @@ def delete(movie_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
-
+#编辑演员条目
+@app.route('/movie/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
+@login_required # 登录保护
+def edit_actor(actor_id):
+    actor = Actor.query.get_or_404(actor_id)
+    if request.method == 'POST': # 处理编辑表单的提交请求
+        name = request.form['name']
+        gender = request.form['gender']
+        country = request.form['country']
+        if not name or not gender or not country or len(gender) > 10 or len(name) > 60 or len(country) > 60:
+            flash('Invalid input.')
+            return redirect(url_for('edit_actor', actor_id=actor_id))
+        
+        # 重定向回对应的编辑页面
+        actor.name = name # 更新标题
+        actor.gender = gender # 更新年份
+        actor.country = country # 更新国家
+        db.session.commit() # 提交数据库会话
+        flash('Item updated.')
+        return redirect(url_for('index')) # 重定向回主页
+    return render_template('edit_actor.html', actor=actor) # 传入被编辑的电影记录
+# 删除演员条目
+@app.route('/movie/delete_actor/<int:actor_id>', methods=['POST']) # 限定只接受 POST 请求
+@login_required # 登录保护
+def delete_actor(actor_id):
+    actor = Movie.query.get_or_404(actor_id) # 获取电影记录
+    db.session.delete(actor) # 删除对应的记录
+    db.session.commit() # 提交数据库会话
+    flash('Item deleted.')
+    return redirect(url_for('index')) # 重定向回主页
 # 用户登录
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -254,47 +284,47 @@ def forge():
         {'id': '1018', 'title': '速度与激情9', 'date': datetime.datetime(2021,5,21), 'country': '中国', 'type': '动作', 'year': '2021', 'box': '13.92'},
     ]
     actors = [
-        {'id': '2001', 'name': '吴京', 'country': '男', 'gender': '中国'}, 
-        {'id': '2002', 'name': '饺子', 'country': '男', 'gender': '中国'}, 
-        {'id': '2003', 'name': '屈楚萧', 'country': '男', 'gender': '中国'}, 
-        {'id': '2004', 'name': '郭帆', 'country': '男', 'gender': '中国'}, 
-        {'id': '2005', 'name': '乔罗素', 'country': '男', 'gender': '美国'}, 
-        {'id': '2006', 'name': '小罗伯特·唐尼', 'country': '男', 'gender': '美国'}, 
-        {'id': '2007', 'name': '克里斯·埃文斯', 'country': '男', 'gender': '美国'}, 
-        {'id': '2008', 'name': '林超贤', 'country': '男', 'gender': '中国'}, 
-        {'id': '2009', 'name': '张译', 'country': '男', 'gender': '中国'}, 
-        {'id': '2010', 'name': '黄景瑜', 'country': '男', 'gender': '中国'}, 
-        {'id': '2011', 'name': '陈思诚', 'country': '男', 'gender': '中国'}, 
-        {'id': '2012', 'name': '王宝强', 'country': '男', 'gender': '中国'}, 
-        {'id': '2013', 'name': '刘昊然', 'country': '男', 'gender': '中国'}, 
-        {'id': '2014', 'name': '文牧野', 'country': '男', 'gender': '中国'}, 
-        {'id': '2015', 'name': '徐峥', 'country': '男', 'gender': '中国'}, 
-        {'id': '2016', 'name': '刘伟强', 'country': '男', 'gender': '中国'}, 
-        {'id': '2017', 'name': '张涵予', 'country': '男', 'gender': '中国'}, 
-        {'id': '2018', 'name': 'F·加里·格雷', 'country': '男', 'gender': '美国'}, 
-        {'id': '2019', 'name': '范·迪塞尔', 'country': '男', 'gender': '美国'}, 
-        {'id': '2020', 'name': '杰森·斯坦森', 'country': '男', 'gender': '美国'}, 
-        {'id': '2021', 'name': '闫非', 'country': '男', 'gender': '中国'}, 
-        {'id': '2022', 'name': '沈腾', 'country': '男', 'gender': '中国'}, 
-        {'id': '2023', 'name': '安东尼·罗素', 'country': '男', 'gender': '美国'}, 
-        {'id': '2024', 'name': '克里斯·海姆斯沃斯', 'country': '男', 'gender': '美国'}, 
-        {'id': '2025', 'name': '许诚毅', 'country': '男', 'gender': '中国'}, 
-        {'id': '2026', 'name': '梁朝伟', 'country': '男', 'gender': '中国'}, 
-        {'id': '2027', 'name': '白百何', 'country': '女', 'gender': '中国'}, 
-        {'id': '2028', 'name': '井柏然', 'country': '男', 'gender': '中国'}, 
-        {'id': '2029', 'name': '管虎', 'country': '男', 'gender': '中国'}, 
-        {'id': '2030', 'name': '王千源', 'country': '男', 'gender': '中国'}, 
-        {'id': '2031', 'name': '姜武', 'country': '男', 'gender': '中国'}, 
-        {'id': '2032', 'name': '宁浩', 'country': '男', 'gender': '中国'}, 
-        {'id': '2033', 'name': '葛优', 'country': '男', 'gender': '中国'}, 
-        {'id': '2034', 'name': '范伟', 'country': '男', 'gender': '中国'}, 
-        {'id': '2035', 'name': '贾玲', 'country': '女', 'gender': '中国'}, 
-        {'id': '2036', 'name': '张小斐', 'country': '女', 'gender': '中国'}, 
-        {'id': '2037', 'name': '陈凯歌', 'country': '男', 'gender': '中国'}, 
-        {'id': '2038', 'name': '徐克', 'country': '男', 'gender': '中国'}, 
-        {'id': '2039', 'name': '易烊千玺', 'country': '男', 'gender': '中国'}, 
-        {'id': '2040', 'name': '林诣彬', 'country': '男', 'gender': '美国'}, 
-        {'id': '2041', 'name': '米歇尔·罗德里格兹', 'country': '女', 'gender': '美国'}, 
+        {'id': '2001', 'name': '吴京', 'gender': '男', 'country': '中国'}, 
+        {'id': '2002', 'name': '饺子', 'gender': '男', 'country': '中国'}, 
+        {'id': '2003', 'name': '屈楚萧', 'gender': '男', 'country': '中国'}, 
+        {'id': '2004', 'name': '郭帆', 'gender': '男', 'country': '中国'}, 
+        {'id': '2005', 'name': '乔罗素', 'gender': '男', 'country': '美国'}, 
+        {'id': '2006', 'name': '小罗伯特·唐尼', 'gender': '男', 'country': '美国'}, 
+        {'id': '2007', 'name': '克里斯·埃文斯', 'gender': '男', 'country': '美国'}, 
+        {'id': '2008', 'name': '林超贤', 'gender': '男', 'country': '中国'}, 
+        {'id': '2009', 'name': '张译', 'gender': '男', 'country': '中国'}, 
+        {'id': '2010', 'name': '黄景瑜', 'gender': '男', 'country': '中国'}, 
+        {'id': '2011', 'name': '陈思诚', 'gender': '男', 'country': '中国'}, 
+        {'id': '2012', 'name': '王宝强', 'gender': '男', 'country': '中国'}, 
+        {'id': '2013', 'name': '刘昊然', 'gender': '男', 'country': '中国'}, 
+        {'id': '2014', 'name': '文牧野', 'gender': '男', 'country': '中国'}, 
+        {'id': '2015', 'name': '徐峥', 'gender': '男', 'country': '中国'}, 
+        {'id': '2016', 'name': '刘伟强', 'gender': '男', 'country': '中国'}, 
+        {'id': '2017', 'name': '张涵予', 'gender': '男', 'country': '中国'}, 
+        {'id': '2018', 'name': 'F·加里·格雷', 'gender': '男', 'country': '美国'}, 
+        {'id': '2019', 'name': '范·迪塞尔', 'gender': '男', 'country': '美国'}, 
+        {'id': '2020', 'name': '杰森·斯坦森', 'gender': '男', 'country': '美国'}, 
+        {'id': '2021', 'name': '闫非', 'gender': '男', 'country': '中国'}, 
+        {'id': '2022', 'name': '沈腾', 'gender': '男', 'country': '中国'}, 
+        {'id': '2023', 'name': '安东尼·罗素', 'gender': '男', 'country': '美国'}, 
+        {'id': '2024', 'name': '克里斯·海姆斯沃斯', 'gender': '男', 'country': '美国'}, 
+        {'id': '2025', 'name': '许诚毅', 'gender': '男', 'country': '中国'}, 
+        {'id': '2026', 'name': '梁朝伟', 'gender': '男', 'country': '中国'}, 
+        {'id': '2027', 'name': '白百何', 'gender': '女', 'country': '中国'}, 
+        {'id': '2028', 'name': '井柏然', 'gender': '男', 'country': '中国'}, 
+        {'id': '2029', 'name': '管虎', 'gender': '男', 'country': '中国'}, 
+        {'id': '2030', 'name': '王千源', 'gender': '男', 'country': '中国'}, 
+        {'id': '2031', 'name': '姜武', 'gender': '男', 'country': '中国'}, 
+        {'id': '2032', 'name': '宁浩', 'gender': '男', 'country': '中国'}, 
+        {'id': '2033', 'name': '葛优', 'gender': '男', 'country': '中国'}, 
+        {'id': '2034', 'name': '范伟', 'gender': '男', 'country': '中国'}, 
+        {'id': '2035', 'name': '贾玲', 'gender': '女', 'country': '中国'}, 
+        {'id': '2036', 'name': '张小斐', 'gender': '女', 'country': '中国'}, 
+        {'id': '2037', 'name': '陈凯歌', 'gender': '男', 'country': '中国'}, 
+        {'id': '2038', 'name': '徐克', 'gender': '男', 'country': '中国'}, 
+        {'id': '2039', 'name': '易烊千玺', 'gender': '男', 'country': '中国'}, 
+        {'id': '2040', 'name': '林诣彬', 'gender': '男', 'country': '美国'}, 
+        {'id': '2041', 'name': '米歇尔·罗德里格兹', 'gender': '女', 'country': '美国'},
     ]
     relation = [
         {'id': '1', 'movie_id': '1001', 'actor_id': '2001', 'type': '主演'}, 

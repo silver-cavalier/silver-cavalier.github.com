@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<p>{{ movies|length }} Titles</p>
+<p>{{ movies|length }} Movies</p>
 {% if current_user.is_authenticated %}
 <form method="post">
     Name <input type="text" name="title" autocomplete="off" required>
@@ -27,4 +27,33 @@
     {% endfor %}
 </ul>
 <img alt="Walking Totoro" class="totoro" src="{{ url_for('static', filename='images/totoro.gif') }}" title="to~to~ro~">
+
+
+<p>{{ actors|length }} Actors</p>
+{% if current_user.is_authenticated %}
+<form method="post">
+    Name <input type="text" name="name" autocomplete="off" required>
+    Gender <input type="text" name="gender" autocomplete="off" required>
+    Country <input type="text" name="country" autocomplete="off" required>
+    <input class="btn" type="submit" name="submit" value="Add">
+</form>
+{% endif %}
+<ul class="actor-list">
+    {% for actor in actors %}
+    <li>{{ actor.name }}-{{ actor.gender }}-{{ actor.country }}
+        <span class="float-right">
+            {% if current_user.is_authenticated %}
+            <a class="btn" href="{{ url_for('edit_actor', actor_id=actor.id) }}">Edit</a>
+            <form class="inline-form" method="post" action="{{	url_for('delete_actor', actor_id=actor.id)	}}">
+                <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
+            </form>
+            {% endif %}
+            <a class="douban" href="https://search.douban.com/movie/subject_search?search_text={{actor.name}}&cat=1002" target="_blank"
+                title="Find this actor on douban">
+                Douban</a>
+        </span>
+    </li>
+    {% endfor %}
+</ul>
+<img alt="Fat Caboo" class="caboo" src="{{ url_for('static', filename='images/fat.gif') }}" title="ca~boo~">
 {% endblock %}
