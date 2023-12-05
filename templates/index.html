@@ -10,6 +10,15 @@
 </form>
 {% endif %}
 
+<h3>Movie List</h3>
+<!-- Search Form -->
+<form method="get" action="{{ url_for('search') }}" class="search-form">
+    <label for="search_query">Search Movie:</label>
+    <input type="text" name="search_query" id="search_query" placeholder="Enter movie title">
+    <input class="btn" type="submit" value="Search">
+</form>
+
+
 <ul class="movie-list">
     {% for movie in movies %}
     <li>{{ movie.title }}-{{ movie.year }} ({{ movie.country }}) TYPE:{{ movie.type }}
@@ -41,6 +50,14 @@
 </form>
 {% endif %}
 
+<h3>Actor List</h3>
+<!-- Search Form -->
+<form method="get" action="{{ url_for('search_actor') }}" class="search-form">
+    <label for="search_query">Search Actor:</label>
+    <input type="text" name="search_query" id="search_query" placeholder="Enter actor name">
+    <input class="btn" type="submit" value="Search">
+</form>
+
 <ul class="actor-list">
     {% for actor in actors %}
     <li>{{ actor.name }}-{{ actor.gender }}-{{ actor.country }}
@@ -51,8 +68,8 @@
                 <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
             </form>
             {% endif %}
-            <a class="douban" href="https://search.douban.com/movie/subject_search?search_text={{actor.name}}&cat=1002" target="_blank"
-                title="Find this actor on douban">
+            <a class="douban" href="https://search.douban.com/movie/subject_search?search_text={{actor.name}}&cat=1002"
+                target="_blank" title="Find this actor on douban">
                 Douban</a>
         </span>
     </li>

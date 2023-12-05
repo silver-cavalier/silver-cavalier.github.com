@@ -125,9 +125,9 @@ def index():
         db.session.commit() # 提交数据库会话
         flash('Item created.') # 显示成功创建的提示
         return redirect(url_for('index')) # 重定向回主页
-    user = User.query.first()
     movies = Movie.query.all()
     actors = Actor.query.all()
+    user = User.query.first()
     return render_template('index.html', user=user, movies=movies, actors=actors)
 # 注：在 index 视图中，原来传入模板的 name 变量被 user 实例取代，模板 index.html 中的两处 name 变量也要相应的更新为 user.name 属性
 # 录入电影条目
@@ -183,6 +183,13 @@ def delete(movie_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+# 查询电影条目
+@app.route('/search', methods=['GET'])
+def search():
+    # 根据搜索查询查询电影
+    search_query = request.args.get('search_query', '')
+    search_results = Movie.query.filter(Movie.title.ilike(f'%{search_query}%')).all()
+    return render_template('search.html', search_results=search_results)
 
 #编辑演员条目
 @app.route('/movie/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
@@ -214,6 +221,13 @@ def delete_actor(actor_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+# 查询演员条目
+@app.route('/search_actor', methods=['GET'])
+def search_actor():
+    # 根据搜索查询查询电影
+    search_query = request.args.get('search_query', '')
+    search_results = Actor.query.filter(Actor.name.ilike(f'%{search_query}%')).all()
+    return render_template('search_actor.html', search_results=search_results)
 
 # 用户登录
 @app.route('/login', methods=['GET', 'POST'])
