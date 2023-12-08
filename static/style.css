@@ -109,9 +109,9 @@ nav li a:hover {
 .imdb {
     font-size: 12px;
     font-weight: bold;
-    color: black;
+    color: white;
     text-decoration: none;
-    background: #F5C518;
+    background: #474540;
     border-radius: 5px;
     padding: 3px 5px;
 }
@@ -123,9 +123,9 @@ nav li a:hover {
 .douban {
     font-size: 12px;
     font-weight: bold;
-    color: black;
+    color: white;
     text-decoration: none;
-    background: #F5C518;
+    background: #474540;
     border-radius: 5px;
     padding: 3px 5px;
 }
@@ -162,20 +162,20 @@ input[name=year] {
 }
 
 .btn1 {
-    font-size: 20px;
+    font-size: 15px;
     padding: 6px 10px;
     text-decoration: none;
     cursor: pointer;
-    background-color: white;
-    color: black;
+    background-color: black;
+    color: white;
     border: 1px solid #555555;
     border-radius: 5px;
 }
 
 .btn1:hover {
     text-decoration: none;
-    background-color: black;
-    color: white;
+    background-color: white;
+    color: black;
     border: 1px solid black;
 }
 

@@ -111,20 +111,6 @@ def index():
     if request.method == 'POST': # 判断是否是 POST 请求
         if not current_user.is_authenticated: # 如果当前用户未认证
             return redirect(url_for('index')) # 重定向到主页
-        # 获取表单数据
-        name = request.form.get('name') # 传入表单对应输入字段的name 值
-        gender = request.form.get('gender')
-        country = request.form.get('country')
-        # 验证数据
-        if not name or not gender or not country or len(gender) > 10 or len(name) > 60 or len(country) > 60:
-            flash('Invalid input.') # 显示错误提示
-            return redirect(url_for('index')) # 重定向回主页
-        # 保存表单数据到数据库
-        actor = Actor(name=name, gender=gender, country=country) # 创建记录
-        db.session.add(actor) # 添加到数据库会话
-        db.session.commit() # 提交数据库会话
-        flash('Item created.') # 显示成功创建的提示
-        return redirect(url_for('index')) # 重定向回主页
     movies = Movie.query.all()
     actors = Actor.query.all()
     user = User.query.first()
@@ -191,8 +177,24 @@ def search():
     search_results = Movie.query.filter(Movie.title.ilike(f'%{search_query}%')).all()
     return render_template('search.html', search_results=search_results)
 
+# 录入演员条目
+@app.route('/actor/input_actor', methods=['GET', 'POST'])
+def input_actor():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        gender = request.form.get('gender')
+        country = request.form.get('country')
+        # 验证数据
+        if not name or not gender or not country or len(gender) > 10 or len(name) > 60 or len(country) > 60:
+            flash('Invalid input.') # 显示错误提示
+            return redirect(url_for('index')) # 重定向回主页
+        actor = Actor(name=name, gender=gender, country=country)
+        db.session.add(actor)
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('input_actor.html')
 #编辑演员条目
-@app.route('/movie/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
+@app.route('/actor/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
 def edit_actor(actor_id):
     actor = Actor.query.get_or_404(actor_id)
