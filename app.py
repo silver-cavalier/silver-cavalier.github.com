@@ -120,6 +120,7 @@ def index():
 @app.route('/movie/input', methods=['GET', 'POST'])
 def input():
     if request.method == 'POST':
+        # 电影
         title = request.form.get('title')
         year = request.form.get('year')
         country = request.form.get('country')
@@ -132,6 +133,10 @@ def input():
         if box == '':  # 处理票房为空的情况
             box = None
         movie = Movie(title=title, year=year, country=country, type=type, box=box)
+        # 主演、导演
+        director_name = request.form.get('director_name')
+        
+        
         db.session.add(movie)
         db.session.commit()
         return redirect(url_for('index'))
