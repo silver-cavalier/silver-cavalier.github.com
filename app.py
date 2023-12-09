@@ -126,15 +126,22 @@ def input():
         country = request.form.get('country')
         type = request.form.get('type')
         box = request.form.get('box')
-        # 验证数据
+        
+        existing_movie = Movie.query.filter_by(title=title).first()
+        if existing_movie: # 检查电影是否已经存在
+            flash('The movie has already existed!')
+            return redirect(url_for('input'))
         if not title or not year or len(year) > 4 or len(title) > 60 or len(country) > 60 or len(type) > 60:
             flash('Invalid input.') # 显示错误提示
             return redirect(url_for('index')) # 重定向回主页
         if box == '':  # 处理票房为空的情况
             box = None
+        
         movie = Movie(title=title, year=year, country=country, type=type, box=box)
+        
         # 主演、导演
         director_name = request.form.get('director_name')
+        actor_name = request.form.get('actor_name')
         
         
         db.session.add(movie)
