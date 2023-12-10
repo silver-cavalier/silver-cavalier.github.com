@@ -138,13 +138,30 @@ def input():
             box = None
         
         movie = Movie(title=title, year=year, country=country, type=type, box=box)
+        db.session.add(movie)
         
         # 主演、导演
         director_name = request.form.get('director_name')
         actor_name = request.form.get('actor_name')
         
+        if director_name == '' and actor_name == '':
+            director_name = None
+            actor_name = None
+        elif  director_name == '' and actor_name != '':
+            actor = Actor(name = actor_name, gender = None, country = None)
+            db.session.add(actor)
+        elif  director_name != '' and actor_name == '':
+            director = Actor(name = director_name, gender = None, country = None)
+            db.session.add(director)
+        elif  director_name != '' and actor_name != '' and director_name != actor_name:
+            actor = Actor(name = actor_name, gender = None, country = None)
+            director = Actor(name = director_name, gender = None, country = None)
+            db.session.add(actor)
+            db.session.add(director)
+        elif director_name != '' and actor_name != '' and director_name == actor_name:
+            actor = Actor(name = actor_name, gender = None, country = None)
+            db.session.add(actor)
         
-        db.session.add(movie)
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('input.html')

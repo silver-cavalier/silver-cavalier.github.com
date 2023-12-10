@@ -2,9 +2,7 @@
 
 {% block content %}
 
-<p>如果你不知道电影票房，可跳过Box空</p>
-
-<h3>输入电影信息</h3>
+<h3>输入电影信息（如果你不知道电影票房，可跳过Box空）</h3>
 <form method="post" action="{{ url_for('input') }}">
     <div>
         <label for="title">Title:</label>
@@ -32,7 +30,7 @@
         <input type="text" name="box" id="box">
     </div>
 
-    <h3>输入该电影的导演或主演信息</h3>
+    <h3>输入该电影的导演或主演信息（如没有可跳过）</h3>
 
     <div>
         <label for="director_name">Director:</label>
@@ -40,7 +38,7 @@
     </div>
 
     <div>
-        <label for="actor_name">Director:</label>
+        <label for="actor_name">Actor:</label>
         <input type="text" name="actor_name" id="actor_name">
     </div>
 
