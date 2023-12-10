@@ -46,11 +46,12 @@ def inject_user(): # 函数名可以随意修改
 
 # models
 
-# 存储用户信息的 User 模型类
+
 # 添加 username 字段和 password_hash字段，分别用来存储登录所需的用户名和密码散列值
 from werkzeug.security import generate_password_hash, check_password_hash
-## 存储用户的 User 模型类继承 Flask-Login 提供的 UserMixin
-from flask_login import UserMixin
+from flask_login import UserMixin  # 存储用户的 User 模型类继承 Flask-Login 提供的 UserMixin
+
+# 存储用户信息的 User 模型类
 class User(db.Model, UserMixin):  # 表名将会是 user（自动生成，小写处理）
     id = db.Column(db.Integer, primary_key=True) # 主键
     name = db.Column(db.String(20))
@@ -60,6 +61,7 @@ class User(db.Model, UserMixin):  # 表名将会是 user（自动生成，小写
         self.password_hash = generate_password_hash(password) #将生成的密码保持到对应字段
     def validate_password(self, password): # 用于验证密码的方法，接受密码作为参数
         return check_password_hash(self.password_hash, password)
+
 # 存储电影信息的 Movie 模型类
 class Movie(db.Model): # 表名将会是 movie
     id = db.Column(db.Integer, primary_key=True) # 主键
@@ -72,6 +74,7 @@ class Movie(db.Model): # 表名将会是 movie
     relations = db.relationship('Relation', back_populates='movie')
     # relation = db.relationship('Relation', primaryjoin='relation.movie_id == movie.id',
     #                         backref='movie', uselist=False, lazy='select') 
+
 # 储存演员信息的 Actor 模型类
 class Actor(db.Model): # 表名将会是 actor
     id = db.Column(db.Integer, primary_key=True) # 主键
@@ -81,6 +84,7 @@ class Actor(db.Model): # 表名将会是 actor
     relations = db.relationship('Relation', back_populates='actor')
     # relation = db.relationship('Relation', primaryjoin='relation.actor_id == actor.id',
     #                         backref='actor', uselist=False, lazy='select')
+
 # 储存电影-演员信息的 Relation 模型类
 class Relation(db.Model): # 表名将会是 relation
     id = db.Column(db.Integer, primary_key=True) # 主键
@@ -105,6 +109,7 @@ class Relation(db.Model): # 表名将会是 relation
 
 from flask import render_template, request, url_for, redirect, flash
 from flask_login import login_user, login_required, logout_user, current_user
+
 # 在主页视图读取数据库记录
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -116,6 +121,7 @@ def index():
     user = User.query.first()
     return render_template('index.html', user=user, movies=movies, actors=actors)
 # 注：在 index 视图中，原来传入模板的 name 变量被 user 实例取代，模板 index.html 中的两处 name 变量也要相应的更新为 user.name 属性
+
 # 录入电影条目
 @app.route('/movie/input', methods=['GET', 'POST'])
 def input():
@@ -139,37 +145,98 @@ def input():
         
         movie = Movie(title=title, year=year, country=country, type=type, box=box)
         db.session.add(movie)
+        movie_id = movie.id
         
         # 主演、导演
         director_name = request.form.get('director_name')
         actor_name = request.form.get('actor_name')
         
+        existing_director = Actor.query.filter_by(name=director_name).first()
+        existing_actor = Actor.query.filter_by(name=actor_name).first()
+        
         if director_name == '' and actor_name == '':
             director_name = None
             actor_name = None
-        elif  director_name == '' and actor_name != '':
-            actor = Actor(name = actor_name, gender = None, country = None)
-            db.session.add(actor)
-        elif  director_name != '' and actor_name == '':
-            director = Actor(name = director_name, gender = None, country = None)
-            db.session.add(director)
-        elif  director_name != '' and actor_name != '' and director_name != actor_name:
-            actor = Actor(name = actor_name, gender = None, country = None)
-            director = Actor(name = director_name, gender = None, country = None)
-            db.session.add(actor)
-            db.session.add(director)
+        elif director_name == '' and actor_name != '':
+            if existing_actor:
+                actor_id = existing_actor.id
+                relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+                flash('The actor has already existed!')
+            else:
+                actor = Actor(name = actor_name, gender = None, country = None)
+                db.session.add(actor)
+                actor_id = actor.id
+                relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+            db.session.add(relation)
+        elif director_name != '' and actor_name == '':
+            if existing_director:
+                director_id = existing_director.id
+                relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
+                flash('The director has already existed!')
+            else:
+                director = Actor(name = director_name, gender = None, country = None)
+                db.session.add(director)
+                director_id = director.id
+                relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
+            db.session.add(relation)
+        elif director_name != '' and actor_name != '' and director_name != actor_name:
+            if existing_actor:
+                actor_id = existing_actor.id
+                relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+                flash('The actor has already existed!')
+                db.session.add(relation)
+            else:
+                actor = Actor(name = actor_name, gender = None, country = None)
+                db.session.add(actor)
+                actor_id = actor.id
+                relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+                db.session.add(relation)
+            if existing_director:
+                director_id = existing_director.id
+                relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
+                flash('The director has already existed!')
+            else:
+                director = Actor(name = director_name, gender = None, country = None)
+                db.session.add(director)
+                director_id = director.id
+                relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
+                db.session.add(relation)
         elif director_name != '' and actor_name != '' and director_name == actor_name:
-            actor = Actor(name = actor_name, gender = None, country = None)
-            db.session.add(actor)
+            if existing_actor:
+                actor_id = existing_actor.id
+                relation_actor = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+                relation_director = Relation(movie_id=movie_id, actor_id=actor_id, type='导演')
+                flash('The actor has already existed!')
+            else:
+                actor = Actor(name = actor_name, gender = None, country = None)
+                db.session.add(actor)
+                actor_id = actor.id
+                relation_actor = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
+                relation_director = Relation(movie_id=movie_id, actor_id=actor_id, type='导演')
+            db.session.add(relation_actor)
+            db.session.add(relation_director)
         
+        # 提交更改
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('input.html')
+
 # 编辑电影条目
 @app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
 def edit(movie_id):
     movie = Movie.query.get_or_404(movie_id)
+    relation_movie = movie.relations
+    actors_for_movie = [relation.actor for relation in relation_movie]  # 该电影的主演、导演，以列表形式储存
+    length = len(relation_movie)
+    actors = []
+    directors = []
+    for i in range(length):
+        if relation_movie[i].type == '主演':
+            actors.append(actors_for_movie[i])
+        elif relation_movie[i].type == '导演':
+            directors.append(actors_for_movie[i])
+    
     if request.method == 'POST': # 处理编辑表单的提交请求
         title = request.form['title']
         year = request.form['year']
@@ -185,10 +252,21 @@ def edit(movie_id):
         movie.country = country
         movie.type = type 
         movie.box = box
+        
+        for actor in actors:
+            actor_name_key = f'actor_name_{actor.id}'
+            actor_name = request.form.get(actor_name_key, actor.name)
+            actor.name = actor_name
+        for director in directors:
+            director_name_key = f'director_name_{director.id}'
+            director_name = request.form.get(director_name_key, director.name)
+            director.name = director_name
+        
         db.session.commit() # 提交数据库会话
         flash('Item updated.')
         return redirect(url_for('index')) # 重定向回主页
-    return render_template('edit.html', movie=movie) # 传入被编辑的电影记录
+    return render_template('edit.html', movie=movie, actors=actors, directors=directors) # 传入被编辑的电影记录
+
 # 删除电影条目
 @app.route('/movie/delete/<int:movie_id>', methods=['POST']) # 限定只接受 POST 请求
 @login_required # 登录保护
@@ -198,6 +276,7 @@ def delete(movie_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+
 # 查询电影条目
 @app.route('/search', methods=['GET'])
 def search():
@@ -222,6 +301,7 @@ def input_actor():
         db.session.commit()
         return redirect(url_for('index'))
     return render_template('input_actor.html')
+
 #编辑演员条目
 @app.route('/actor/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
@@ -243,6 +323,7 @@ def edit_actor(actor_id):
         flash('Item updated.')
         return redirect(url_for('index')) # 重定向回主页
     return render_template('edit_actor.html', actor=actor) # 传入被编辑的电影记录
+
 # 删除演员条目
 @app.route('/actor/delete_actor/<int:actor_id>', methods=['POST']) # 限定只接受 POST 请求
 @login_required # 登录保护
@@ -252,6 +333,7 @@ def delete_actor(actor_id):
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
+
 # 查询演员条目
 @app.route('/search_actor', methods=['GET'])
 def search_actor():
@@ -278,6 +360,7 @@ def login():
         flash('Invalid username or password.') # 如果验证失败，显示错误消息
         return redirect(url_for('login')) # 重定向回登录页面
     return render_template('login.html')
+
 # 用户登出
 @app.route('/logout')
 @login_required # 用于视图保护，后面会详细介绍
@@ -285,6 +368,7 @@ def logout():
     logout_user() # 登出用户
     flash('Goodbye.')
     return redirect(url_for('index')) # 重定向回首页
+
 # 支持设置用户名字
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
@@ -317,9 +401,11 @@ def settings():
 # commands
 
 import click
+
 # 编写自定义命令来自动执行创建数据库表操作
 @app.cli.command() # 注册为命令
 @click.option('--drop', is_flag=True, help='Create after drop.')
+
 # 设置选项
 def initdb(drop):
     """Initialize the database."""
@@ -327,6 +413,7 @@ def initdb(drop):
         db.drop_all()
     db.create_all()
     click.echo('Initialized database.') # 输出提示信息
+
 # 生成虚拟数据命令
 import datetime
 @app.cli.command()
@@ -467,6 +554,7 @@ def forge():
         db.session.add(relation)
     db.session.commit()
     click.echo('Done.')
+
 # 创建管理员账户命令
 @app.cli.command()
 @click.option('--username', prompt=True, help='The username used to login.')
@@ -503,10 +591,12 @@ def admin(username, password):
 @app.errorhandler(404)
 def page_not_found(e): # 接受异常对象作为参数
     return render_template('errors/404.html'), 404 # 返回模板和状态码
+
 # 400 错误处理函数
 @app.errorhandler(400)
 def page_not_found(e): # 接受异常对象作为参数
     return render_template('errors/400.html'), 400 # 返回模板和状态码
+
 # 500 错误处理函数
 @app.errorhandler(500)
 def page_not_found(e): # 接受异常对象作为参数

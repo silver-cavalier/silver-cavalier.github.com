@@ -1,3 +1,7 @@
+<footer>
+    <small>&copy; 2018 <a href="http://helloflask.com/tutorial">HelloFlask</a></small>
+</footer>
+
 <form method="post">
     Name <input type="text" name="title" autocomplete="off" required>
     Year <input type="text" name="year" autocomplete="off" required>

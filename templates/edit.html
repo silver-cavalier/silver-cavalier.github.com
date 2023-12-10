@@ -2,11 +2,40 @@
 {% block content %}
 <h3>Edit item</h3>
 <form method="post">
-    Name <input type="text" name="title" autocomplete="off" required value="{{ movie.title }}">
-    Year <input type="text" name="year" autocomplete="off" required value="{{ movie.year }}">
-    Country <input type="text" name="country" autocomplete="off" required value="{{ movie.country }}">
-    Type <input type="text" name="type" autocomplete="off" required value="{{ movie.type }}">
-    Box <input type="float" name="box" autocomplete="off"  value="{{ movie.box }}">
+    <div>
+        Name <input type="text" name="title" autocomplete="off" required value="{{ movie.title }}">
+    </div>
+
+    <div>
+        Year <input type="text" name="year" autocomplete="off" required value="{{ movie.year }}">
+    </div>
+
+    <div>
+        Country <input type="text" name="country" autocomplete="off" required value="{{ movie.country }}">
+    </div>
+
+    <div>
+        Type <input type="text" name="type" autocomplete="off" required value="{{ movie.type }}">
+    </div>
+
+    <div>
+        Box <input type="float" name="box" autocomplete="off" value="{{ movie.box }}">
+    </div>
+
+    {% for actor in actors %}
+    <div>
+        Actor {{ actor.id }}<input type="text" name="actor_name_{{ actor.id }}" autocomplete="off" required
+            value="{{ actor.name }}">
+    </div>
+    {% endfor %}
+
+    {% for director in directors %}
+    <div>
+        Director {{ director.id }}<input type="text" name="director_name_{{ director.id }}" autocomplete="off" required
+            value="{{ director.name }}">
+    </div>
+    {% endfor %}
+
     <input class="btn" type="submit" name="submit" value="Update">
 </form>
 {% endblock %}
