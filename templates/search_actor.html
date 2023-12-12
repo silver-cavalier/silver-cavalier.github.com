@@ -2,11 +2,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<img alt="Fat Caboo" class="caboo" src="{{ url_for('static', filename='images/fat.gif') }}" title="ca~boo~">
-<h3>Search Results</h3>
+
+<h2>查找结果</h2>
+
+{% for (actor, actors, directors) in Result %}
 
 <ul class="actor-list">
-    {% for actor in search_results %}
     <li>{{ actor.name }}-{{ actor.gender }}-{{ actor.country }}
         <span class="float-right">
             {% if current_user.is_authenticated %}
@@ -20,8 +21,23 @@
                 Douban</a>
         </span>
     </li>
+
+    <h3>主演的电影：</h3>
+    {% for actor in actors %}
+    <div>
+        {{ actor.title }}
+    </div>
+    {% endfor %}
+
+    <h3>导演的电影：</h3>
+    {% for director in directors %}
+    <div>
+        {{ director.title }}
+    </div>
     {% endfor %}
 </ul>
-<img alt="Walking Totoro" class="totoro" src="{{ url_for('static', filename='images/totoro.gif') }}" title="to~to~ro~">
+{% endfor %}
+
+<img alt="Flowing Caboo" class="liquid" src="{{ url_for('static', filename='images/liquid.gif') }}" title="li~qu~id~">
 
 {% endblock %}

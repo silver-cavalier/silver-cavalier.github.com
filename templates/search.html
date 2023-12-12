@@ -18,14 +18,18 @@
                 IMDb</a>
         </span>
     </li>
+
+    <h3>主演：</h3>
     {% for actor in actors %}
     <div>
-        主演： {{ actor.name }}
+        {{ actor.name }}
     </div>
     {% endfor %}
+
+    <h3>导演：</h3>
     {% for director in directors %}
     <div>
-        导演： {{ director.name }}
+        {{ director.name }}
     </div>
     {% endfor %}
 </ul>

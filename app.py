@@ -165,6 +165,7 @@ def input():
             else:
                 actor = Actor(name = actor_name, gender = None, country = None)
                 db.session.add(actor)
+                db.session.commit() # 这里不做这一步的话就不会给actor生成id
                 actor_id = actor.id
                 relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
             db.session.add(relation)
@@ -176,10 +177,12 @@ def input():
             else:
                 director = Actor(name = director_name, gender = None, country = None)
                 db.session.add(director)
+                db.session.commit() # 这里不做这一步的话就不会给director生成id
                 director_id = director.id
                 relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
             db.session.add(relation)
         elif director_name != '' and actor_name != '' and director_name != actor_name:
+            
             if existing_actor:
                 actor_id = existing_actor.id
                 relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
@@ -188,9 +191,11 @@ def input():
             else:
                 actor = Actor(name = actor_name, gender = None, country = None)
                 db.session.add(actor)
+                db.session.commit() # 这里不做这一步的话就不会给新的生成id
                 actor_id = actor.id
                 relation = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
                 db.session.add(relation)
+                
             if existing_director:
                 director_id = existing_director.id
                 relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
@@ -198,9 +203,11 @@ def input():
             else:
                 director = Actor(name = director_name, gender = None, country = None)
                 db.session.add(director)
+                db.session.commit() # 这里不做这一步的话就不会给新的生成id
                 director_id = director.id
                 relation = Relation(movie_id=movie_id, actor_id=director_id, type='导演')
                 db.session.add(relation)
+                
         elif director_name != '' and actor_name != '' and director_name == actor_name:
             if existing_actor:
                 actor_id = existing_actor.id
@@ -210,6 +217,7 @@ def input():
             else:
                 actor = Actor(name = actor_name, gender = None, country = None)
                 db.session.add(actor)
+                db.session.commit() # 这里不做这一步的话就不会给新的生成id
                 actor_id = actor.id
                 relation_actor = Relation(movie_id=movie_id, actor_id=actor_id, type='主演')
                 relation_director = Relation(movie_id=movie_id, actor_id=actor_id, type='导演')
@@ -284,8 +292,6 @@ def edit(movie_id):
                     if relationship: # 如果是空的就不执行
                         db.session.delete(relationship) # 删除对应的记录
                     db.session.add(Relation(movie_id=movie_id, actor_id=existing_actor.id, type='主演')) 
-                    # relation_movie_actor[i].actor_id = existing_actor.id
-                    # relation_movie_actor[i].type = '主演'
             else:
                 new_actor = Actor(name=actor_name, gender=None, country=None)
                 db.session.add(new_actor)
@@ -294,15 +300,12 @@ def edit(movie_id):
                     db.session.delete(relationship) # 删除对应的记录
                 relationship = Relation(movie_id=movie_id, actor_id=new_actor.id, type='主演')
                 db.session.add(relationship) 
-                # relation_movie_actor[i].actor_id = new_actor.id
-                # relation_movie_actor[i].type = '主演'
                 
         for i, director in enumerate(directors):
             director_name_key = f'director_name_{director.id}'
             director_name = request.form.get(director_name_key, director.name)
             existing_director = Actor.query.filter_by(name=director_name).first()
             relationship = Relation.query.filter_by(movie_id=movie_id, actor_id=director.id).first()
-            # relationship = relation_movie_actor[i]
             if existing_director:
                 if existing_director.id == director.id:
                     continue
@@ -310,8 +313,6 @@ def edit(movie_id):
                     if relationship: # 如果是空的就不执行
                         db.session.delete(relationship) # 删除对应的记录
                     db.session.add(Relation(movie_id=movie_id, actor_id=existing_director.id, type='导演')) 
-                    # relation_movie_director[i].actor_id = existing_director.id
-                    # relation_movie_director[i].type = '导演'
             else:
                 new_director = Actor(name=director_name, gender=None, country=None)
                 db.session.add(new_director)
@@ -320,8 +321,6 @@ def edit(movie_id):
                     db.session.delete(relationship) # 删除对应的记录
                 relationship = Relation(movie_id=movie_id, actor_id=new_director.id, type='导演')
                 db.session.add(relationship) 
-                # relation_movie_director[i].actor_id = new_director.id
-                # relation_movie_director[i].type = '导演'
         
         None_Actor = Actor.query.filter_by(name=None).all() # 查找是否没有增添
         for none_actor in None_Actor:
@@ -363,30 +362,35 @@ def search():
     # 根据搜索查询查询电影
     search_query = request.args.get('search_query', '')
     search_results = Movie.query.filter(Movie.title.ilike(f'%{search_query}%')).all()
-    Relation_movie_actor=[]
-    Relation_movie_director=[]
-    Actors=[]
-    Directors=[]
+
+    Relation_movie_actor = []
+    Relation_movie_director = []
+    Actors = []
+    Directors = []
+    
     for search_result in search_results:
-        relation_movie = search_result.relations
-        actors_for_movie = [relation.actor for relation in relation_movie]  # 该电影的主演、导演，以列表形式储存
-        length = len(relation_movie)
-        actors = []
-        relation_movie_actor = []
-        directors = []
-        relation_movie_director = []
-        for i in range(length):
-            if relation_movie[i].type == '主演':
-                actors.append(actors_for_movie[i])
-                relation_movie_actor.append(relation_movie[i])
-            elif relation_movie[i].type == '导演':
-                directors.append(actors_for_movie[i])
-                relation_movie_director.append(relation_movie[i])
+        
+        actors = [] # 该电影的主演，以列表形式储存
+        directors = [] # 该电影的导演，以列表形式储存
+        
+        relation_movie_actor = Relation.query.filter_by(movie_id=search_result.id, type='主演').all() # 所有主演关系
+        for relation in relation_movie_actor:
+            actor = Actor.query.filter_by(id=relation.actor_id).first()
+            if actor:
+                actors.append(actor)
+        
+        relation_movie_director = Relation.query.filter_by(movie_id=search_result.id, type='导演').all() # 所有导演关系
+        for relation in relation_movie_director:
+            director = Actor.query.filter_by(id=relation.actor_id).first()
+            if director:
+                directors.append(director)
+                
         Actors.append(actors)
         Directors.append(directors)
         Relation_movie_actor.append(relation_movie_actor)
         Relation_movie_director.append(relation_movie_director)
-        Result = zip(search_results, Actors, Directors)
+        
+    Result = zip(search_results, Actors, Directors)
     return render_template('search.html', Result=Result)
 
 # 录入演员条目
@@ -406,7 +410,7 @@ def input_actor():
         return redirect(url_for('index'))
     return render_template('input_actor.html')
 
-#编辑演员条目
+# 编辑演员条目
 @app.route('/actor/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
 def edit_actor(actor_id):
@@ -447,7 +451,37 @@ def search_actor():
     # 根据搜索查询查询电影
     search_query = request.args.get('search_query', '')
     search_results = Actor.query.filter(Actor.name.ilike(f'%{search_query}%')).all()
-    return render_template('search_actor.html', search_results=search_results)
+    
+    Relation_movie_actor = []
+    Relation_movie_director = []
+    Actors = []
+    Directors = []
+    
+    for search_result in search_results:
+        
+        actors = [] # 主演过的电影，以列表形式储存
+        directors = [] # 导演过的电影，以列表形式储存
+        
+        relation_movie_actor = Relation.query.filter_by(actor_id=search_result.id, type='主演').all() # 所有主演关系
+        for relation in relation_movie_actor:
+            actor = Movie.query.filter_by(id=relation.movie_id).first()
+            if actor:
+                actors.append(actor)
+        
+        relation_movie_director = Relation.query.filter_by(actor_id=search_result.id, type='导演').all() # 所有导演关系
+        for relation in relation_movie_director:
+            director = Movie.query.filter_by(id=relation.movie_id).first()
+            if director:
+                directors.append(director)
+                
+        Actors.append(actors)
+        Directors.append(directors)
+        Relation_movie_actor.append(relation_movie_actor)
+        Relation_movie_director.append(relation_movie_director)
+        
+    Result = zip(search_results, Actors, Directors)
+    
+    return render_template('search_actor.html', Result=Result)
 
 # 用户登录
 @app.route('/login', methods=['GET', 'POST'])
