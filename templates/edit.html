@@ -24,14 +24,14 @@
 
     {% for actor in actors %}
     <div>
-        Actor {{ actor.id }}<input type="text" name="actor_name_{{ actor.id }}" autocomplete="off" required
+        Actor {{ actor.id }}<input type="text" name="actor_name_{{ actor.id }}" autocomplete="off"
             value="{{ actor.name }}">
     </div>
     {% endfor %}
 
     {% for director in directors %}
     <div>
-        Director {{ director.id }}<input type="text" name="director_name_{{ director.id }}" autocomplete="off" required
+        Director {{ director.id }}<input type="text" name="director_name_{{ director.id }}" autocomplete="off"
             value="{{ director.name }}">
     </div>
     {% endfor %}

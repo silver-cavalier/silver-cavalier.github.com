@@ -1,12 +1,10 @@
 <!-- search.html -->
 {% extends 'base.html' %}
-
 {% block content %}
-<img alt="Fat Caboo" class="caboo" src="{{ url_for('static', filename='images/fat.gif') }}" title="ca~boo~">
-<h3>Search Results</h3>
+<h2>查找结果</h2>
 
+{% for (movie, actors, directors) in Result %}
 <ul class="movie-list">
-    {% for movie in search_results %}
     <li>{{ movie.title }}-{{ movie.year }} ({{ movie.country }}) TYPE:{{ movie.type }}
         <span class="float-right">
             {% if current_user.is_authenticated %}
@@ -20,8 +18,19 @@
                 IMDb</a>
         </span>
     </li>
+    {% for actor in actors %}
+    <div>
+        主演： {{ actor.name }}
+    </div>
+    {% endfor %}
+    {% for director in directors %}
+    <div>
+        导演： {{ director.name }}
+    </div>
     {% endfor %}
 </ul>
-<img alt="Walking Totoro" class="totoro" src="{{ url_for('static', filename='images/totoro.gif') }}" title="to~to~ro~">
+{% endfor %}
+
+<img alt="Flowing Caboo" class="liquid" src="{{ url_for('static', filename='images/liquid.gif') }}" title="li~qu~id~">
 
 {% endblock %}

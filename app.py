@@ -151,8 +151,8 @@ def input():
         director_name = request.form.get('director_name')
         actor_name = request.form.get('actor_name')
         
-        existing_director = Actor.query.filter_by(name=director_name).first()
-        existing_actor = Actor.query.filter_by(name=actor_name).first()
+        existing_director = Actor.query.filter_by(name=director_name).first() # 查找主演是否已经存在
+        existing_actor = Actor.query.filter_by(name=actor_name).first() # 查找导演是否已经存在
         
         if director_name == '' and actor_name == '':
             director_name = None
@@ -226,16 +226,32 @@ def input():
 @login_required # 登录保护
 def edit(movie_id):
     movie = Movie.query.get_or_404(movie_id)
-    relation_movie = movie.relations
-    actors_for_movie = [relation.actor for relation in relation_movie]  # 该电影的主演、导演，以列表形式储存
-    length = len(relation_movie)
-    actors = []
-    directors = []
-    for i in range(length):
-        if relation_movie[i].type == '主演':
-            actors.append(actors_for_movie[i])
-        elif relation_movie[i].type == '导演':
-            directors.append(actors_for_movie[i])
+    actors = [] # 该电影的主演，以列表形式储存
+    directors = [] # 该电影的导演，以列表形式储存
+    relation_movie_actor = Relation.query.filter_by(movie_id=movie_id, type='主演').all() # 所有主演关系
+    for relation in relation_movie_actor: # 不能用actors = [relation.actor for relation in relation_movie_actor]会有None
+        actor = Actor.query.filter_by(id=relation.actor_id).first()
+        if actor:
+            actors.append(actor)
+    relation_movie_director = Relation.query.filter_by(movie_id=movie_id, type='导演').all() # 所有导演关系
+    for relation in relation_movie_director: # 不能用directors = [relation.actor for relation in relation_movie_director]
+        director = Actor.query.filter_by(id=relation.actor_id).first()
+        if director:
+            directors.append(director)
+
+            
+    add_actor = Actor(name=None, gender=None, country=None) # 为了方便增添主演，如果没添就删了
+    db.session.add(add_actor)
+    add_actor_id = add_actor.id
+    actors.append(add_actor)
+    relation_movie_actor.append(Relation(movie_id=movie_id, actor_id=add_actor_id, type='主演'))
+    
+    add_director = Actor(name=None, gender=None, country=None) # 为了方便增添导演，如果没添就删了
+    db.session.add(add_director)
+    add_director_id = add_director.id
+    directors.append(add_director)
+    relation_movie_director.append(Relation(movie_id=movie_id, actor_id=add_director_id, type='主演'))
+    
     
     if request.method == 'POST': # 处理编辑表单的提交请求
         title = request.form['title']
@@ -246,6 +262,8 @@ def edit(movie_id):
         if not title or not year or len(year) > 4 or len(title) > 60 or len(country) > 60 or len(type) > 60:
             flash('Invalid input.')
             return redirect(url_for('edit', movie_id=movie_id))
+        if box == 'None': # 处理输入成字符串的情况
+            box=None
         # 重定向回对应的编辑页面
         movie.title = title
         movie.year = year
@@ -253,14 +271,73 @@ def edit(movie_id):
         movie.type = type 
         movie.box = box
         
-        for actor in actors:
+        for i, actor in enumerate(actors):
             actor_name_key = f'actor_name_{actor.id}'
             actor_name = request.form.get(actor_name_key, actor.name)
-            actor.name = actor_name
-        for director in directors:
+            existing_actor = Actor.query.filter_by(name=actor_name).first()
+            relationship = Relation.query.filter_by(movie_id=movie_id, actor_id=actor.id).first()
+            # relationship = relation_movie_actor[i]
+            if existing_actor:
+                if existing_actor.id == actor.id:
+                    continue
+                else:
+                    if relationship: # 如果是空的就不执行
+                        db.session.delete(relationship) # 删除对应的记录
+                    db.session.add(Relation(movie_id=movie_id, actor_id=existing_actor.id, type='主演')) 
+                    # relation_movie_actor[i].actor_id = existing_actor.id
+                    # relation_movie_actor[i].type = '主演'
+            else:
+                new_actor = Actor(name=actor_name, gender=None, country=None)
+                db.session.add(new_actor)
+                db.session.commit() # 这里不做这一步的话就不会给new_actor生成id，不知道为什么
+                if relationship: # 如果是空的就不执行
+                    db.session.delete(relationship) # 删除对应的记录
+                relationship = Relation(movie_id=movie_id, actor_id=new_actor.id, type='主演')
+                db.session.add(relationship) 
+                # relation_movie_actor[i].actor_id = new_actor.id
+                # relation_movie_actor[i].type = '主演'
+                
+        for i, director in enumerate(directors):
             director_name_key = f'director_name_{director.id}'
             director_name = request.form.get(director_name_key, director.name)
-            director.name = director_name
+            existing_director = Actor.query.filter_by(name=director_name).first()
+            relationship = Relation.query.filter_by(movie_id=movie_id, actor_id=director.id).first()
+            # relationship = relation_movie_actor[i]
+            if existing_director:
+                if existing_director.id == director.id:
+                    continue
+                else:
+                    if relationship: # 如果是空的就不执行
+                        db.session.delete(relationship) # 删除对应的记录
+                    db.session.add(Relation(movie_id=movie_id, actor_id=existing_director.id, type='导演')) 
+                    # relation_movie_director[i].actor_id = existing_director.id
+                    # relation_movie_director[i].type = '导演'
+            else:
+                new_director = Actor(name=director_name, gender=None, country=None)
+                db.session.add(new_director)
+                db.session.commit() # 这里不做这一步的话就不会给new_actor生成id，不知道为什么
+                if relationship: # 如果是空的就不执行
+                    db.session.delete(relationship) # 删除对应的记录
+                relationship = Relation(movie_id=movie_id, actor_id=new_director.id, type='导演')
+                db.session.add(relationship) 
+                # relation_movie_director[i].actor_id = new_director.id
+                # relation_movie_director[i].type = '导演'
+        
+        None_Actor = Actor.query.filter_by(name=None).all() # 查找是否没有增添
+        for none_actor in None_Actor:
+            # relation_movies = none_actor.relations
+            relation_movies = Relation.query.filter_by(actor_id=none_actor.id).all()
+            db.session.delete(none_actor) # 删除对应的记录
+            for r in relation_movies:
+                db.session.delete(r) # 删除对应的记录
+                
+        None_Actor = Actor.query.filter_by(name='None').all() # 查找是否没有增添
+        for none_actor in None_Actor:
+            # relation_movies = none_actor.relations
+            relation_movies = Relation.query.filter_by(actor_id=none_actor.id).all()
+            db.session.delete(none_actor) # 删除对应的记录
+            for r in relation_movies:
+                db.session.delete(r) # 删除对应的记录
         
         db.session.commit() # 提交数据库会话
         flash('Item updated.')
@@ -272,7 +349,10 @@ def edit(movie_id):
 @login_required # 登录保护
 def delete(movie_id):
     movie = Movie.query.get_or_404(movie_id) # 获取电影记录
+    relation_movie = movie.relations
     db.session.delete(movie) # 删除对应的记录
+    for relation in relation_movie:
+        db.session.delete(relation) # Relation里也要删除对应记录
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
@@ -283,7 +363,31 @@ def search():
     # 根据搜索查询查询电影
     search_query = request.args.get('search_query', '')
     search_results = Movie.query.filter(Movie.title.ilike(f'%{search_query}%')).all()
-    return render_template('search.html', search_results=search_results)
+    Relation_movie_actor=[]
+    Relation_movie_director=[]
+    Actors=[]
+    Directors=[]
+    for search_result in search_results:
+        relation_movie = search_result.relations
+        actors_for_movie = [relation.actor for relation in relation_movie]  # 该电影的主演、导演，以列表形式储存
+        length = len(relation_movie)
+        actors = []
+        relation_movie_actor = []
+        directors = []
+        relation_movie_director = []
+        for i in range(length):
+            if relation_movie[i].type == '主演':
+                actors.append(actors_for_movie[i])
+                relation_movie_actor.append(relation_movie[i])
+            elif relation_movie[i].type == '导演':
+                directors.append(actors_for_movie[i])
+                relation_movie_director.append(relation_movie[i])
+        Actors.append(actors)
+        Directors.append(directors)
+        Relation_movie_actor.append(relation_movie_actor)
+        Relation_movie_director.append(relation_movie_director)
+        Result = zip(search_results, Actors, Directors)
+    return render_template('search.html', Result=Result)
 
 # 录入演员条目
 @app.route('/actor/input_actor', methods=['GET', 'POST'])
@@ -328,8 +432,11 @@ def edit_actor(actor_id):
 @app.route('/actor/delete_actor/<int:actor_id>', methods=['POST']) # 限定只接受 POST 请求
 @login_required # 登录保护
 def delete_actor(actor_id):
-    actor = Actor.query.get_or_404(actor_id) # 获取电影记录
+    actor = Actor.query.get_or_404(actor_id) # 获取演员记录
+    relation_actor = Relation.query.filter_by(actor_id=actor.id).all()
     db.session.delete(actor) # 删除对应的记录
+    for relation in relation_actor:
+        db.session.delete(relation) # Relation里也要删除对应记录
     db.session.commit() # 提交数据库会话
     flash('Item deleted.')
     return redirect(url_for('index')) # 重定向回主页
