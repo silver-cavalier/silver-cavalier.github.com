@@ -79,7 +79,7 @@ footer {
 /* 导航栏 */
 nav ul {
     list-style-type: none;
-    margin: 0;
+    margin: 6;
     padding: 0;
     overflow: hidden;
     background-color: #333;
@@ -162,8 +162,8 @@ input[name=year] {
 }
 
 .btn1 {
-    font-size: 15px;
-    padding: 6px 10px;
+    font-size: 12px;
+    padding: 3px 5px;
     text-decoration: none;
     cursor: pointer;
     background-color: black;

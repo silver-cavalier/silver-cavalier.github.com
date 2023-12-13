@@ -742,3 +742,83 @@ def page_not_found(e): # 接受异常对象作为参数
 @app.errorhandler(500)
 def page_not_found(e): # 接受异常对象作为参数
     return render_template('errors/500.html'), 500 # 返回模板和状态码
+
+
+
+
+
+
+
+
+
+# analyse
+
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif']=['SimHei']  #解决中文显示乱码问题
+plt.rcParams['axes.unicode_minus']=False
+# from IPython import get_ipython
+# get_ipython().run_line_magic('matplotlib', 'inline')
+
+# 分类型箱线图
+@app.route('/analyse')
+def analyse():    
+    movie_types = db.session.query(Movie.type).distinct().all() # 不同类型的电影
+    box_plot_data = [] # 储存不同种类的电影的数据
+    
+    for movie_type in movie_types:  # movie_types是列表，里面每一个movie_type是元组，形式为('战争',)
+        movie_type_box = [] # 该类型的电影的票房，列表形式储存
+        movies = Movie.query.filter_by(type=movie_type[0])
+        for movie in movies:
+            if movie.box:  # 非空才录入
+                movie_type_box.append(movie.box)
+        box_plot_data.append(movie_type_box) # 一个元素是一个列表
+    
+    plt.figure(figsize=(12, 6))
+    for i, (movie_type, movie_box) in enumerate(zip(movie_types, box_plot_data)):
+        plt.boxplot(movie_box, positions=[i + 1], labels=[movie_type[0]])
+    
+    image_path = f'static/analyse_box_plot.png'  # 储存在static里
+    plt.savefig(image_path)
+    
+    return render_template('analyse.html', image_path=image_path)
+
+
+import sklearn.linear_model as LM 
+import pandas
+#建立线性预测模型
+@app.route('/movie/predict/<int:movie_id>', methods=['GET', 'POST'])
+@login_required # 登录保护
+def predict(movie_id):
+    movie_predict = Movie.query.filter_by(id=movie_id).first()
+    
+    if movie_predict.box:
+        flash("该电影已有票房记录，为 movie_predict.box")
+    
+    df=[]  # 储存被解释变量和解释变量
+    movies = Movie.query.all()
+    for movie in movies:
+        if movie.box:
+            data = [movie.box, movie.year, movie.country, movie.type,
+                    len(Relation.query.filter_by(movie_id=movie_id, type=['主演']).all()), # 有几个主演
+                    len(Relation.query.filter_by(movie_id=movie_id, type=['导演']).all())] # 有几个导演
+            df.append(data)
+    df = pd.DataFrame(df) # 转变为数据框
+    df.columns = ['box', 'year', 'country', 'type', 'actors', 'directors'] # 重命名
+    y = df['box']
+    X = df[['year', 'country', 'type', 'actors', 'directors']]
+    X = X.join(pd.get_dummies(X['country'])) # 生成country的虚拟变量
+    X = X.drop(X.columns[[-1]], axis=1) # 删除最后一列防止多重共线性
+    X = X.join(pd.get_dummies(X['type'])) # 生成type的虚拟变量
+    X = X.drop(X.columns[[-1]], axis=1) # 删除最后一列防止多重共线性
+    X = X.drop(['country', 'type'], axis=1) # 删除原数据
+    
+    modelLR = LM.LinearRegression() # 线性回归
+    modelLR.fit(X,y)
+    
+    
+
+
+
+
+
+
