@@ -4,7 +4,7 @@
 
 {% if current_user.is_authenticated %}
 
-<a class="btn" href="{{ url_for('analyse') }}">分析电影票房</a>
+<a class="btn" href="{{ url_for('analyse') }}">Analyse Movie Boxes</a>
 
 {% endif %}
 
@@ -13,12 +13,11 @@
 
 {% if current_user.is_authenticated %}
 <form method="post">
-    <a class="btn1" href="{{ url_for('input') }}">录入新电影</a>
+    <a class="btn1" href="{{ url_for('input') }}">Input Your New Movie</a>
 </form>
 {% endif %}
 
 <h3>Movie List</h3>
-<!-- 查找 -->
 <form method="get" action="{{ url_for('search') }}" class="search-form">
     <label for="search_query">Search Movie:</label>
     <input type="text" name="search_query" id="search_query" placeholder="Enter movie title">
@@ -31,6 +30,8 @@
     <li>{{ movie.title }}-{{ movie.year }} ({{ movie.country }}) TYPE:{{ movie.type }}
         <span class="float-right">
             {% if current_user.is_authenticated %}
+            <a class="btn" href="{{ url_for('analyse_movie', movie_id=movie.id) }}">Analyse</a>
+            <a class="btn" href="{{ url_for('predict', movie_id=movie.id) }}">Predict</a>
             <a class="btn" href="{{ url_for('edit', movie_id=movie.id) }}">Edit</a>
             <form class="inline-form" method="post" action="{{	url_for('delete', movie_id=movie.id)	}}">
                 <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
@@ -56,12 +57,11 @@
 
 {% if current_user.is_authenticated %}
 <form method="post">
-    <a class="btn1" href="{{ url_for('input_actor') }}">录入新演员</a>
+    <a class="btn1" href="{{ url_for('input_actor') }}">Input Your New Actor</a>
 </form>
 {% endif %}
 
 <h3>Actor List</h3>
-<!-- Search Form -->
 <form method="get" action="{{ url_for('search_actor') }}" class="search-form">
     <label for="search_query">Search Actor:</label>
     <input type="text" name="search_query" id="search_query" placeholder="Enter actor name">

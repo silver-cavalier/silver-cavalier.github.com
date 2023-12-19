@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Predict Box</h2>
+
+<form method="post">
+
+    <h3>电影 {{movie_predict.title}} 的预测票房为 {{box_predict}}</h3>
+
+    {% if movie_predict.box %}
+    <h3>电影 {{movie_predict.title}} 的真实票房为 {{movie_predict.box}}</h3>
+    {% else %}
+    <h3>电影 {{movie_predict.title}} 暂无真实票房记录</h3>
+    {% endif %}
+
+</form>
+
+<img alt="Lazy Caboo" class="lazy_caboo" src="{{ url_for('static', filename='images/lazy.gif') }}" title="la~zy~">
+{% endblock %}

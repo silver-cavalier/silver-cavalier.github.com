@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Analyse {{movie.title}} Box</h2>
+<form method="post">
+
+    {% if movie.box %}
+    <h3>电影{{movie.title}}的票房超越同类型{{rank}}%的电影！</h3>
+    {% else %}
+    <h3>该电影无票房记录！</h3>
+    {% endif %}
+
+    <input class="btn" type="submit" name="submit" value="Update">
+</form>
+{% endblock %}

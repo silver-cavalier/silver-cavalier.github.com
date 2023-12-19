@@ -145,6 +145,7 @@ def input():
         
         movie = Movie(title=title, year=year, country=country, type=type, box=box)
         db.session.add(movie)
+        db.session.commit() # 这里不做这一步的话就不会给新的生成id
         movie_id = movie.id
         
         # 主演、导演
@@ -393,6 +394,33 @@ def search():
     Result = zip(search_results, Actors, Directors)
     return render_template('search.html', Result=Result)
 
+# 分析电影票房
+@app.route('/movie/analyse_movie/<int:movie_id>', methods=['Get', 'POST']) # 限定只接受 POST 请求
+@login_required # 登录保护
+def analyse_movie(movie_id):
+    movie = Movie.query.get_or_404(movie_id) # 获取电影记录
+    box = movie.box
+    if not box:
+        flash("该电影没有票房记录")
+        rank = None
+    else:
+        Box = []
+        type = movie.type
+        all_movies = Movie.query.filter_by(type=type).order_by(Movie.box).all()
+        for other_movie in all_movies:
+            if other_movie.box:
+                Box.append((other_movie.id, other_movie.box))
+        num = 0
+        for i in range(len(Box)):
+            num = num + 1
+            if Box[i][0] == movie_id:
+                break
+        rank = num*100 / len(Box)
+        rank = round(rank, 2) # 保留2位小数
+        
+    return render_template('analyse_movie.html', movie=movie, rank=rank)
+        
+        
 # 录入演员条目
 @app.route('/actor/input_actor', methods=['GET', 'POST'])
 def input_actor():
@@ -784,7 +812,7 @@ def analyse():
 
 
 import sklearn.linear_model as LM 
-import pandas
+import pandas as pd
 #建立线性预测模型
 @app.route('/movie/predict/<int:movie_id>', methods=['GET', 'POST'])
 @login_required # 登录保护
@@ -792,30 +820,43 @@ def predict(movie_id):
     movie_predict = Movie.query.filter_by(id=movie_id).first()
     
     if movie_predict.box:
-        flash("该电影已有票房记录，为 movie_predict.box")
+        flash("该电影已有票房记录")
+    else:
+        flash("该电影暂无票房记录")
     
     df=[]  # 储存被解释变量和解释变量
     movies = Movie.query.all()
     for movie in movies:
         if movie.box:
             data = [movie.box, movie.year, movie.country, movie.type,
-                    len(Relation.query.filter_by(movie_id=movie_id, type=['主演']).all()), # 有几个主演
-                    len(Relation.query.filter_by(movie_id=movie_id, type=['导演']).all())] # 有几个导演
+                    len(Relation.query.filter_by(movie_id=movie.id, type='主演').all()), # 有几个主演
+                    len(Relation.query.filter_by(movie_id=movie.id, type='导演').all())] # 有几个导演
             df.append(data)
     df = pd.DataFrame(df) # 转变为数据框
     df.columns = ['box', 'year', 'country', 'type', 'actors', 'directors'] # 重命名
     y = df['box']
-    X = df[['year', 'country', 'type', 'actors', 'directors']]
+    x = df[['year', 'country', 'type', 'actors', 'directors']]
+    # 预测的x0
+    x0 = pd.DataFrame([[movie_predict.year, movie_predict.country, movie_predict.type,
+                        len(Relation.query.filter_by(movie_id=movie_id, type='主演').all()),
+                        len(Relation.query.filter_by(movie_id=movie_id, type='导演').all())]], # 必须是[[]]不然会是6行1列
+                      columns = ['year', 'country', 'type', 'actors', 'directors'])  # 设置列名
+    
+    X = x._append(x0, ignore_index=True)  # x0在最后一行
     X = X.join(pd.get_dummies(X['country'])) # 生成country的虚拟变量
     X = X.drop(X.columns[[-1]], axis=1) # 删除最后一列防止多重共线性
     X = X.join(pd.get_dummies(X['type'])) # 生成type的虚拟变量
     X = X.drop(X.columns[[-1]], axis=1) # 删除最后一列防止多重共线性
-    X = X.drop(['country', 'type'], axis=1) # 删除原数据
+    X = X.drop(['country', 'type'], axis=1) # 删除原数据列
+    
+    x0 = pd.DataFrame(X.iloc[-1,:]).T  # 只要单行时需要转置，多行不需要
+    x = pd.DataFrame(X.iloc[:-1,:])
     
     modelLR = LM.LinearRegression() # 线性回归
-    modelLR.fit(X,y)
+    modelLR.fit(x,y) 
+    box_predict = modelLR.predict(x0)
     
-    
+    return render_template('predict.html', movie_predict=movie_predict, box_predict=box_predict)
 
 
 
