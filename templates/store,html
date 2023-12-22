@@ -9,6 +9,43 @@
 </form>
 
 
+    {% for actor in actors %}
+    {% if actor %}
+    <div>
+        Actor {{ actor.id }}<input type="text" name="actor_name_{{ actor.id }}" autocomplete="off"
+            value="{{ actor.name }}">
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% for director in directors %}
+    {% if director %}
+    <div>
+        Director {{ director.id }}<input type="text" name="director_name_{{ director.id }}" autocomplete="off"
+            value="{{ director.name }}">
+    </div>
+    {% endif %}
+    {% endfor %}
+
+
+
+def edit(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    relation_movie = Relation.query.filter_by(movie_id=movie_id).all()
+    actors_for_movie = [relation.actor for relation in relation_movie]  # 该电影的主演、导演，以列表形式储存
+    length = len(relation_movie)
+    actors = []
+    relation_movie_actor = []
+    directors = []
+    relation_movie_director = []
+    for i in range(length):
+        if relation_movie[i].type == '主演':
+            actors.append(actors_for_movie[i])
+            relation_movie_actor.append(relation_movie[i])
+        elif relation_movie[i].type == '导演':
+            directors.append(actors_for_movie[i])
+            relation_movie_director.append(relation_movie[i])
+
 
 # 获取表单数据
 title = request.form.get('title') # 传入表单对应输入字段的name 值

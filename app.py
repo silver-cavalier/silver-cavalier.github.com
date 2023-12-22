@@ -249,13 +249,13 @@ def edit(movie_id):
             directors.append(director)
 
             
-    add_actor = Actor(name=None, gender=None, country=None) # 为了方便增添主演，如果没添就删了
+    add_actor = Actor(name='录入新的演员或导演', gender=None, country=None) # 为了方便增添主演，如果没添就删了
     db.session.add(add_actor)
     add_actor_id = add_actor.id
     actors.append(add_actor)
     relation_movie_actor.append(Relation(movie_id=movie_id, actor_id=add_actor_id, type='主演'))
     
-    add_director = Actor(name=None, gender=None, country=None) # 为了方便增添导演，如果没添就删了
+    add_director = Actor(name='录入新的演员或导演', gender=None, country=None) # 为了方便增添导演，如果没添就删了
     db.session.add(add_director)
     add_director_id = add_director.id
     directors.append(add_director)
@@ -331,7 +331,7 @@ def edit(movie_id):
             for r in relation_movies:
                 db.session.delete(r) # 删除对应的记录
                 
-        None_Actor = Actor.query.filter_by(name='None').all() # 查找是否没有增添
+        None_Actor = Actor.query.filter_by(name='录入新的演员或导演').all() # 查找是否没有增添
         for none_actor in None_Actor:
             # relation_movies = none_actor.relations
             relation_movies = Relation.query.filter_by(actor_id=none_actor.id).all()
@@ -827,6 +827,8 @@ def predict(movie_id):
     df=[]  # 储存被解释变量和解释变量
     movies = Movie.query.all()
     for movie in movies:
+        # if movie.id == movie_id: # 排除需要预测的那个
+        #     continue
         if movie.box:
             data = [movie.box, movie.year, movie.country, movie.type,
                     len(Relation.query.filter_by(movie_id=movie.id, type='主演').all()), # 有几个主演
